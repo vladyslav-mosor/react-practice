@@ -22,4 +22,4 @@ export const ProductsList = ({ productsList }) => (
       </td>
     </tr>
   ))
-)
+);

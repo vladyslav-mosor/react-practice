@@ -4,6 +4,8 @@ import './App.scss';
 import usersFromServer from './api/users';
 import categoriesFromServer from './api/categories';
 import productsFromServer from './api/products';
+import { CategoriesList } from './components/CategoriesList';
+import { ProductsList } from './components/ProductsList';
 
 const products = productsFromServer.map((product) => {
   const category = categoriesFromServer
@@ -19,10 +21,15 @@ const products = productsFromServer.map((product) => {
 });
 
 const users = usersFromServer;
-const categories = categoriesFromServer;
 
 export const App = () => {
-  // const [products, setProducts] = useState(products);
+  const [productsList, setProductsList] = useState(products);
+
+  const handleFilterByUser = (value) => {
+    setProductsList(prevProductsList => (
+      prevProductsList.filter(({ user }) => user.id === value)
+    ));
+  };
 
   return (
     <div className="section">
@@ -41,10 +48,12 @@ export const App = () => {
                 All
               </a>
 
-              {users.map(({ name }) => (
+              {users.map(({ name, id }) => (
                 <a
+                  key={id}
                   data-cy="FilterUser"
                   href="#/"
+                  onClick={() => handleFilterByUser(id)}
                 >
                   {name}
                 </a>
@@ -69,7 +78,8 @@ export const App = () => {
                   <button
                     data-cy="ClearButton"
                     type="button"
-                    className="delete" />
+                    className="delete"
+                  />
                 </span>
               </p>
             </div>
@@ -83,15 +93,7 @@ export const App = () => {
                 All
               </a>
 
-              {categories.map(({ title }) => (
-                <a
-                  data-cy="Category"
-                  className="button mr-2 my-1 is-info"
-                  href="#/"
-                >
-                  {title}
-                </a>
-              ))}
+              <CategoriesList categories={categoriesFromServer} />
             </div>
 
             <div className="panel-block">
@@ -168,30 +170,7 @@ export const App = () => {
             </thead>
 
             <tbody>
-              {products.map(({
-                id,
-                name,
-                user,
-                category
-              }) => (
-                <tr data-cy="Product">
-                  <td className="has-text-weight-bold" data-cy="ProductId">
-                    {id}
-                  </td>
-
-                  <td data-cy="ProductName">{name}</td>
-                  <td data-cy="ProductCategory">
-                    {category.icon} - {category.title}
-                  </td>
-
-                  <td
-                    data-cy="ProductUser"
-                    className="has-text-link"
-                  >
-                    {user.name}
-                  </td>
-                </tr>
-              ))}
+              <ProductsList productsList={productsList} />
             </tbody>
           </table>
         </div>

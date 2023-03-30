@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import './App.scss';
 
+import classNames from 'classnames';
 import usersFromServer from './api/users';
 import categoriesFromServer from './api/categories';
 import productsFromServer from './api/products';
-import { CategoriesList } from './components/CategoriesList';
-import { ProductsList } from './components/ProductsList';
 
 const products = productsFromServer.map((product) => {
   const category = categoriesFromServer
     .find(({ id }) => product.categoryId === id);
-
   const user = usersFromServer.find(({ id }) => category.ownerId === id);
 
   return {
@@ -20,16 +18,23 @@ const products = productsFromServer.map((product) => {
   };
 });
 
-const users = usersFromServer;
-
 export const App = () => {
-  const [productsList, setProductsList] = useState(products);
+  const [selectedUserId, setSelectedUserId] = useState(0);
+  const [query, setQuery] = useState('');
 
-  const handleFilterByUser = (value) => {
-    setProductsList(prevProductsList => (
-      prevProductsList.filter(({ user }) => user.id === value)
-    ));
-  };
+  let visibleProducts = [...products];
+
+  if (selectedUserId) {
+    visibleProducts = visibleProducts
+      .filter(({ user }) => user.id === selectedUserId);
+  }
+
+  if (query) {
+    const lowerQuery = query.toLocaleLowerCase();
+
+    visibleProducts = visibleProducts
+      .filter(({ name }) => name.toLocaleLowerCase().includes(lowerQuery));
+  }
 
   return (
     <div className="section">
@@ -44,16 +49,20 @@ export const App = () => {
               <a
                 data-cy="FilterAllUsers"
                 href="#/"
+                onClick={() => setSelectedUserId(0)}
               >
                 All
               </a>
 
-              {users.map(({ name, id }) => (
+              {usersFromServer.map(({ name, id }) => (
                 <a
-                  key={id}
                   data-cy="FilterUser"
                   href="#/"
-                  onClick={() => handleFilterByUser(id)}
+                  className={classNames({
+                    'is-active': id === selectedUserId,
+                  })}
+                  key={id}
+                  onClick={() => setSelectedUserId(id)}
                 >
                   {name}
                 </a>
@@ -67,7 +76,8 @@ export const App = () => {
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
                 />
 
                 <span className="icon is-left">
@@ -75,12 +85,14 @@ export const App = () => {
                 </span>
 
                 <span className="icon is-right">
-                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-                  <button
-                    data-cy="ClearButton"
-                    type="button"
-                    className="delete"
-                  />
+                  {query && (
+                    <button
+                      data-cy="ClearButton"
+                      type="button"
+                      className="delete"
+                      onClick={() => setQuery('')}
+                    />
+                  )}
                 </span>
               </p>
             </div>
@@ -94,7 +106,36 @@ export const App = () => {
                 All
               </a>
 
-              <CategoriesList categories={categoriesFromServer} />
+              <a
+                data-cy="Category"
+                className="button mr-2 my-1 is-info"
+                href="#/"
+              >
+                Category 1
+              </a>
+
+              <a
+                data-cy="Category"
+                className="button mr-2 my-1"
+                href="#/"
+              >
+                Category 2
+              </a>
+
+              <a
+                data-cy="Category"
+                className="button mr-2 my-1 is-info"
+                href="#/"
+              >
+                Category 3
+              </a>
+              <a
+                data-cy="Category"
+                className="button mr-2 my-1"
+                href="#/"
+              >
+                Category 4
+              </a>
             </div>
 
             <div className="panel-block">
@@ -110,11 +151,7 @@ export const App = () => {
         </div>
 
         <div className="box table-container">
-          {productsList.length === 0 ? (
-            <p data-cy="NoMatchingMessage">
-              No products matching selected criteria
-            </p>
-          ) : (
+          {visibleProducts.length > 0 ? (
             <table
               data-cy="ProductTable"
               className="table is-striped is-narrow is-fullwidth"
@@ -172,11 +209,37 @@ export const App = () => {
               </thead>
 
               <tbody>
-                <ProductsList productsList={productsList} />
+                {visibleProducts.map(({ id, name, category, user }) => (
+                  <tr data-cy="Product" key={id}>
+                    <td className="has-text-weight-bold" data-cy="ProductId">
+                      {id}
+                    </td>
+
+                    <td data-cy="ProductName">{name}</td>
+                    <td data-cy="ProductCategory">
+                      {`${category.icon} - ${category.title}`}
+                    </td>
+
+                    <td
+                      data-cy="ProductUser"
+                      className={classNames(
+                        'has-text-link',
+                        {
+                          'has-text-danger': user.sex === 'f',
+                        },
+                      )}
+                    >
+                      {user.name}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
+          ) : (
+            <p data-cy="NoMatchingMessage">
+              No products matching selected criteria
+            </p>
           )}
-
         </div>
       </div>
     </div>
